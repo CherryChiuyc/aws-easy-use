@@ -78,5 +78,17 @@ def does_repo_has_tag(repo_name: str, tag: str):
     """
     
     client = boto3.client('ecr')
+
     response = client.list_images(repositoryName=repo_name)
-    return tag in [x["imageTag"] for x in response["imageIds"]]
+    if tag in [x["imageTag"] for x in response["imageIds"]]:
+        return True
+    next_token = response["nextToken"]
+    
+    # pagination
+    while next_token:
+        response = client.list_images(repositoryName=repo_name, 
+                                      next_token=next_token)
+        if tag in [x["imageTag"] for x in response["imageIds"]]:
+            return True
+        next_token = response["nextToken"]
+    return False
